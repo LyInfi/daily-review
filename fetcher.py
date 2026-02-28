@@ -1,7 +1,7 @@
 import json
 import time
 import requests
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 BASE_URL = "https://www.wuylh.com/replayrobot/json"
@@ -112,12 +112,28 @@ def load_or_fetch(
         )
         return data, None
 
-    # 爬取为空（休市/非交易日），回退到最近有数据的文件
+    # 爬取为空（休市/非交易日），优先回退到最近有数据的本地文件
     existing = sorted(Path(data_dir).glob("*.json"), reverse=True)
     if existing:
         fallback_data = json.loads(existing[0].read_text(encoding="utf-8"))
         fallback_date = existing[0].stem
         warning = f"今日休市或数据为空，显示 {fallback_date} 的数据"
         return fallback_data, warning
+
+    # 本地无任何缓存（首次运行），向前探测最近 10 个自然日，找到最近有数据的交易日
+    base_date = datetime.strptime(date_str, "%Y-%m-%d")
+    for days_back in range(1, 11):
+        candidate = (base_date - timedelta(days=days_back)).strftime("%Y-%m-%d")
+        try:
+            fallback = fetch_fn(date_str=candidate)
+        except ConnectionError:
+            continue
+        if fallback.get("limit_up"):
+            candidate_path = Path(data_dir) / f"{candidate}.json"
+            candidate_path.write_text(
+                json.dumps(fallback, ensure_ascii=False, indent=2), encoding="utf-8"
+            )
+            warning = f"今日休市或数据为空，显示 {candidate} 的数据"
+            return fallback, warning
 
     return {"date": date_str, "limit_up": [], "limit_broken": [], "summary": {}}, "暂无历史数据"
