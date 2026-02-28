@@ -32,6 +32,31 @@ def _map_stock(raw: dict) -> dict:
     }
 
 
+def _parse_ten_days(ten_days: list) -> list[dict]:
+    """
+    从 tenDays 数组解析近10日趋势摘要。
+    tenDays[0]=日期, [3]=总涨停, [19]=开板数, [20]=封板率%
+    """
+    if not ten_days or len(ten_days) < 21:
+        return []
+    dates = ten_days[0]
+    zt_all_list = ten_days[3]
+    broken_list = ten_days[19]
+    seal_list = ten_days[20]
+    n = min(len(dates), len(zt_all_list), len(broken_list), len(seal_list))
+    result = []
+    for i in range(n):
+        parts = str(dates[i]).split("-")
+        normalized = f"{parts[0]}-{int(parts[1]):02d}-{int(parts[2]):02d}"
+        result.append({
+            "date": normalized,
+            "zt_all": int(zt_all_list[i] or 0),
+            "limit_broken_count": int(broken_list[i] or 0),
+            "seal_rate": float(seal_list[i] or 0),
+        })
+    return result
+
+
 def parse_daily_data(json_data: dict, date_str: str) -> dict:
     """
     解析 wuylh JSON 响应，返回标准化的每日复盘数据。
@@ -51,11 +76,14 @@ def parse_daily_data(json_data: dict, date_str: str) -> dict:
         "seal_rate": float(today.get("fbl", 0) or 0),
     }
 
+    history_10d = _parse_ten_days(json_data.get("tenDays", []))
+
     return {
         "date": date_str,
         "limit_up": limit_up,
         "limit_broken": limit_broken,
         "summary": summary,
+        "history_10d": history_10d,
         "fetched_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
     }
 

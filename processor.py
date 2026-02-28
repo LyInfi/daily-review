@@ -81,21 +81,57 @@ def get_continuous_ladder(stocks: list[dict]) -> list[dict]:
     return result
 
 
+def _history_entry_from_10d(entry: dict) -> dict:
+    """将 history_10d 中的一条摘要转为 load_history 统一格式。"""
+    zt_all = entry.get("zt_all", 0)
+    broken = entry.get("limit_broken_count", 0)
+    total = zt_all + broken
+    bust_rate = round(broken / total * 100, 2) if total > 0 else 0.0
+    return {
+        "date": entry["date"],
+        "limit_up_count": zt_all,
+        "limit_broken_count": broken,
+        "zt_all": zt_all,
+        "seal_rate": entry.get("seal_rate", 0.0),
+        "bust_rate": bust_rate,
+        "max_continuous": 0,
+        "max_continuous_name": "—",
+        "top_topic": "—",
+    }
+
+
 def load_history(data_dir: str = "data", limit: int = 10) -> list[dict]:
     """
     加载最近 N 个交易日的数据，用于趋势图。
+    当本地文件不足时，从最新文件的 history_10d 字段补充历史数据。
     返回按日期升序排列的数据列表。
     """
     files = sorted(Path(data_dir).glob("*.json"))[-limit:]
-    history = []
+    history: list[dict] = []
     for f in files:
         try:
             data = json.loads(f.read_text(encoding="utf-8"))
             stats = get_summary_stats(data)
-            history.append({
-                "date": data.get("date", f.stem),
-                **stats,
-            })
+            history.append({"date": data.get("date", f.stem), **stats})
         except (json.JSONDecodeError, KeyError):
             continue
-    return history
+
+    # 若本地文件不足，从最新文件的 history_10d 补充
+    if len(history) < limit:
+        all_files = sorted(Path(data_dir).glob("*.json"), reverse=True)
+        existing_dates = {h["date"] for h in history}
+        for f in all_files:
+            try:
+                data = json.loads(f.read_text(encoding="utf-8"))
+                h10d = data.get("history_10d", [])
+                if not h10d:
+                    continue
+                for entry in reversed(h10d):  # 从最新到最旧
+                    if entry["date"] not in existing_dates and len(history) < limit:
+                        history.append(_history_entry_from_10d(entry))
+                        existing_dates.add(entry["date"])
+                break  # 只用最新文件的 history_10d
+            except (json.JSONDecodeError, KeyError):
+                continue
+
+    return sorted(history, key=lambda x: x["date"])
