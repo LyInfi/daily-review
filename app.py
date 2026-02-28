@@ -174,6 +174,7 @@ else:
                 yaxis=yaxis,
             ))
         fig_daily.update_layout(
+            xaxis={"type": "category"},
             yaxis={"title": "家数 / 金额(亿)"},
             yaxis2={"title": "比率%", "overlaying": "y", "side": "right"},
             hovermode="x unified",
@@ -210,6 +211,7 @@ else:
                 mode="lines+markers",
             ))
         fig_timing.update_layout(
+            xaxis={"type": "category"},
             yaxis={"title": "家数"},
             hovermode="x unified",
             legend={"orientation": "h", "y": -0.2},
