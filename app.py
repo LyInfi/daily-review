@@ -6,6 +6,49 @@ from datetime import datetime
 from fetcher import load_or_fetch
 from processor import get_summary_stats, get_topic_counts, get_continuous_ladder, load_history
 
+# ── 近10日趋势图：指标定义 ─────────────────────────────────────
+# 日级别指标（key → (中文标签, 轴, 线型)）
+DAILY_METRICS = {
+    "zt_all":             ("总涨停",          "left",  "solid"),
+    "limit_broken_count": ("开板数",          "left",  "solid"),
+    "up_count":           ("上涨家数",        "left",  "solid"),
+    "down_count":         ("下跌家数",        "left",  "solid"),
+    "dt_count":           ("跌停数",          "left",  "solid"),
+    "lb_count":           ("连板数",          "left",  "solid"),
+    "up10_count":         ("涨幅10%以上",     "left",  "solid"),
+    "down9_count":        ("跌幅9%以上",      "left",  "solid"),
+    "yizi_count":         ("一字涨停",        "left",  "solid"),
+    "zt_925":             ("9:25涨停",        "left",  "solid"),
+    "seal_rate":          ("封板率%",         "right", "dot"),
+    "rate_1to2":          ("一进二连板率%",   "right", "dot"),
+    "rate_2to3":          ("二进三连板率%",   "right", "dot"),
+    "rate_3to4":          ("三进四连板率%",   "right", "dot"),
+    "lb_rate":            ("连板率%",         "right", "dot"),
+    "lb_rate_prev":       ("昨日连板率%",     "right", "dot"),
+    "zt_amount":          ("涨停总金额(亿)",  "left",  "dash"),
+    "total_amount":       ("总金额(亿)",      "left",  "dash"),
+    "sh_amount":          ("上证成交额(亿)",  "left",  "dash"),
+    "cyb_amount":         ("创业板成交额(亿)","left",  "dash"),
+    "kcb_amount":         ("科创板成交额(亿)","left",  "dash"),
+}
+
+DAILY_DEFAULT = ["zt_all", "limit_broken_count", "seal_rate", "lb_rate"]
+
+# 时间分布指标（key → 中文标签）
+TIMING_METRICS = {
+    "shouban":     "首板",
+    "er_lb":       "二连板",
+    "san_lb":      "三连板",
+    "si_lb":       "四连板",
+    "wu_lb":       "五连板以上",
+    "t_before10":  "10点前",
+    "t_1000_1130": "10:00-11:30",
+    "t_1300_1400": "13:00-14:00",
+    "t_1400_1500": "14:00-15:00",
+}
+
+TIMING_DEFAULT = ["shouban", "er_lb", "san_lb"]
+
 st.set_page_config(
     page_title="每日复盘看板",
     page_icon="📈",
@@ -107,28 +150,72 @@ if len(history) < 2:
 else:
     hist_df = pd.DataFrame(history)
 
-    fig_line = go.Figure()
-    fig_line.add_trace(go.Scatter(
-        x=hist_df["date"], y=hist_df["limit_up_count"],
-        name="连板股数（展示）", line={"color": "#4C78A8"},
-    ))
-    fig_line.add_trace(go.Scatter(
-        x=hist_df["date"], y=hist_df["limit_broken_count"],
-        name="开板家数", line={"color": "#F58518"},
-    ))
-    fig_line.add_trace(go.Scatter(
-        x=hist_df["date"], y=hist_df["bust_rate"],
-        name="炸板率%", line={"color": "#E45756", "dash": "dot"},
-        yaxis="y2",
-    ))
-    fig_line.update_layout(
-        yaxis={"title": "家数"},
-        yaxis2={"title": "炸板率%", "overlaying": "y", "side": "right", "range": [0, 100]},
-        hovermode="x unified",
+    # 块一：日级别指标
+    daily_labels = {k: DAILY_METRICS[k][0] for k in DAILY_METRICS}
+    selected_daily = st.multiselect(
+        "选择日级别指标",
+        options=list(DAILY_METRICS.keys()),
+        default=DAILY_DEFAULT,
+        format_func=lambda k: daily_labels[k],
+        key="trend_daily",
     )
-    st.plotly_chart(fig_line, use_container_width=True)
+
+    if not selected_daily:
+        st.info("请至少选择一个日级别指标。")
+    else:
+        fig_daily = go.Figure()
+        for key in selected_daily:
+            label, axis, dash = DAILY_METRICS[key]
+            yaxis = "y2" if axis == "right" else "y"
+            fig_daily.add_trace(go.Scatter(
+                x=hist_df["date"],
+                y=hist_df[key] if key in hist_df.columns else [0] * len(hist_df),
+                name=label,
+                line={"dash": dash},
+                yaxis=yaxis,
+            ))
+        fig_daily.update_layout(
+            yaxis={"title": "家数 / 金额(亿)"},
+            yaxis2={"title": "比率%", "overlaying": "y", "side": "right", "range": [0, 100]},
+            hovermode="x unified",
+            legend={"orientation": "h", "y": -0.2},
+        )
+        st.plotly_chart(fig_daily, use_container_width=True)
 
 st.divider()
+
+# ── 模块 C2：近10日涨停时间分布 ────────────────────────────────
+st.subheader("⏰ 近10日涨停时间分布")
+
+if len(history) < 2:
+    st.info("历史数据不足，积累更多交易日后趋势图将自动显示。")
+else:
+    selected_timing = st.multiselect(
+        "选择涨停时间段 / 连板梯度",
+        options=list(TIMING_METRICS.keys()),
+        default=TIMING_DEFAULT,
+        format_func=lambda k: TIMING_METRICS[k],
+        key="trend_timing",
+    )
+
+    if not selected_timing:
+        st.info("请至少选择一个时间段指标。")
+    else:
+        fig_timing = go.Figure()
+        for key in selected_timing:
+            label = TIMING_METRICS[key]
+            fig_timing.add_trace(go.Scatter(
+                x=hist_df["date"],
+                y=hist_df[key] if key in hist_df.columns else [0] * len(hist_df),
+                name=label,
+                mode="lines+markers",
+            ))
+        fig_timing.update_layout(
+            yaxis={"title": "家数"},
+            hovermode="x unified",
+            legend={"orientation": "h", "y": -0.2},
+        )
+        st.plotly_chart(fig_timing, use_container_width=True)
 
 # ── 模块 D：连板梯队图（柱状图） ──────────────────────────────
 st.subheader("🪜 连板梯队")
