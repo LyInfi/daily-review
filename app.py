@@ -25,11 +25,11 @@ DAILY_METRICS = {
     "rate_3to4":          ("三进四连板率%",   "right", "dot"),
     "lb_rate":            ("连板率%",         "right", "dot"),
     "lb_rate_prev":       ("昨日连板率%",     "right", "dot"),
-    "zt_amount":          ("涨停总金额(亿)",  "left",  "dash"),
-    "total_amount":       ("总金额(亿)",      "left",  "dash"),
-    "sh_amount":          ("上证成交额(亿)",  "left",  "dash"),
-    "cyb_amount":         ("创业板成交额(亿)","left",  "dash"),
-    "kcb_amount":         ("科创板成交额(亿)","left",  "dash"),
+    "zt_amount":          ("涨停总金额(亿)",  "right", "dash"),
+    "total_amount":       ("总金额(亿)",      "right", "dash"),
+    "sh_amount":          ("上证成交额(亿)",  "right", "dash"),
+    "cyb_amount":         ("创业板成交额(亿)","right", "dash"),
+    "kcb_amount":         ("科创板成交额(亿)","right", "dash"),
 }
 
 DAILY_DEFAULT = ["zt_all", "limit_broken_count", "seal_rate", "lb_rate"]
@@ -145,18 +145,17 @@ st.subheader("📊 近10日情绪趋势")
 
 history = load_history(limit=10)
 
+hist_df = pd.DataFrame(history) if len(history) >= 2 else pd.DataFrame()
+
 if len(history) < 2:
     st.info("历史数据不足，积累更多交易日后趋势图将自动显示。")
 else:
-    hist_df = pd.DataFrame(history)
-
     # 块一：日级别指标
-    daily_labels = {k: DAILY_METRICS[k][0] for k in DAILY_METRICS}
     selected_daily = st.multiselect(
         "选择日级别指标",
         options=list(DAILY_METRICS.keys()),
         default=DAILY_DEFAULT,
-        format_func=lambda k: daily_labels[k],
+        format_func=lambda k: DAILY_METRICS[k][0],
         key="trend_daily",
     )
 
@@ -176,7 +175,7 @@ else:
             ))
         fig_daily.update_layout(
             yaxis={"title": "家数 / 金额(亿)"},
-            yaxis2={"title": "比率%", "overlaying": "y", "side": "right", "range": [0, 100]},
+            yaxis2={"title": "比率% / 金额(亿)", "overlaying": "y", "side": "right"},
             hovermode="x unified",
             legend={"orientation": "h", "y": -0.2},
         )
