@@ -1,4 +1,6 @@
+import json
 import pytest
+from pathlib import Path
 from processor import (
     get_summary_stats,
     get_topic_counts,
@@ -111,3 +113,42 @@ class TestGetContinuousLadder:
 
     def test_empty_returns_empty_list(self):
         assert get_continuous_ladder([]) == []
+
+
+class TestLoadHistory:
+    def _write_day(self, data_dir: Path, date: str, limit_up_count: int = 2):
+        data = {
+            "date": date,
+            "summary": {"zt_all": 50, "seal_rate": 80.0},
+            "limit_up": [
+                {"name": f"股{i}", "code": f"00000{i}", "continuous_days": i,
+                 "reason": "人工智能", "amount": 5.0, "price": 10.0,
+                 "change_pct": 10.0, "turnover_rate": 8.0}
+                for i in range(1, limit_up_count + 1)
+            ],
+            "limit_broken": [],
+        }
+        (data_dir / f"{date}.json").write_text(json.dumps(data), encoding="utf-8")
+
+    def test_returns_list_of_stats(self, tmp_path):
+        self._write_day(tmp_path, "2026-02-25")
+        self._write_day(tmp_path, "2026-02-26")
+        result = load_history(data_dir=str(tmp_path))
+        assert len(result) == 2
+        assert result[0]["date"] == "2026-02-25"
+
+    def test_respects_limit(self, tmp_path):
+        for i in range(1, 6):
+            self._write_day(tmp_path, f"2026-02-{20 + i:02d}")
+        result = load_history(data_dir=str(tmp_path), limit=3)
+        assert len(result) == 3
+
+    def test_skips_invalid_json(self, tmp_path):
+        self._write_day(tmp_path, "2026-02-25")
+        (tmp_path / "2026-02-26.json").write_text("invalid json", encoding="utf-8")
+        result = load_history(data_dir=str(tmp_path))
+        assert len(result) == 1
+
+    def test_empty_dir_returns_empty_list(self, tmp_path):
+        result = load_history(data_dir=str(tmp_path))
+        assert result == []

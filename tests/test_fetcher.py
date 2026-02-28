@@ -1,7 +1,8 @@
 import json
 import pytest
+import requests
 from pathlib import Path
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 from fetcher import parse_daily_data, fetch_today_data, load_or_fetch
 
 
@@ -57,6 +58,36 @@ class TestParseDailyData:
         assert result["date"] == "2026-02-28"
 
 
+class TestFetchTodayData:
+    def test_returns_parsed_data_on_success(self):
+        mock_resp = MagicMock()
+        mock_resp.json.return_value = FIXTURE_JSON
+        mock_resp.raise_for_status.return_value = None
+
+        with patch("fetcher.requests.get", return_value=mock_resp), \
+             patch("fetcher.time.sleep"):
+            result = fetch_today_data(date_str="2026-02-28")
+
+        assert result["date"] == "2026-02-28"
+        assert "limit_up" in result
+
+    def test_raises_connection_error_on_http_failure(self):
+        with patch("fetcher.requests.get", side_effect=requests.RequestException("timeout")):
+            with pytest.raises(ConnectionError, match="爬取失败"):
+                fetch_today_data(date_str="2026-02-28")
+
+    def test_uses_today_when_date_not_provided(self):
+        mock_resp = MagicMock()
+        mock_resp.json.return_value = FIXTURE_JSON
+        mock_resp.raise_for_status.return_value = None
+
+        with patch("fetcher.requests.get", return_value=mock_resp), \
+             patch("fetcher.time.sleep"):
+            result = fetch_today_data()  # no date_str
+
+        assert "date" in result
+
+
 class TestLoadOrFetch:
     def test_loads_existing_data_file(self, tmp_path):
         date_str = "2026-02-28"
@@ -107,3 +138,20 @@ class TestLoadOrFetch:
             date_str="2026-02-28", data_dir=str(tmp_path), fetch_fn=mock_fetch
         )
         assert warning is not None
+
+    def test_handles_connection_error_gracefully(self, tmp_path):
+        mock_fetch = MagicMock(side_effect=ConnectionError("网络错误"))
+
+        result, warning = load_or_fetch(
+            date_str="2026-02-28", data_dir=str(tmp_path), fetch_fn=mock_fetch
+        )
+        # Should return empty data with warning (no fallback file exists)
+        assert warning is not None
+        assert result["limit_up"] == []
+
+    def test_uses_today_date_when_none_provided(self, tmp_path):
+        mock_fetch = MagicMock(
+            return_value={"date": "2026-02-28", "limit_up": [{"name": "X"}], "limit_broken": [], "summary": {}}
+        )
+        result, warning = load_or_fetch(data_dir=str(tmp_path), fetch_fn=mock_fetch)
+        mock_fetch.assert_called_once()
