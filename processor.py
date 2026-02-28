@@ -81,13 +81,23 @@ def get_continuous_ladder(stocks: list[dict]) -> list[dict]:
     return result
 
 
+_EXTRA_10D_FIELDS = [
+    "up_count", "down_count", "dt_count", "lb_count",
+    "up10_count", "down9_count", "yizi_count", "zt_925",
+    "rate_1to2", "rate_2to3", "rate_3to4", "lb_rate", "lb_rate_prev",
+    "zt_amount", "total_amount", "sh_amount", "cyb_amount", "kcb_amount",
+    "shouban", "er_lb", "san_lb", "si_lb", "wu_lb",
+    "t_before10", "t_1000_1130", "t_1300_1400", "t_1400_1500",
+]
+
+
 def _history_entry_from_10d(entry: dict) -> dict:
     """将 history_10d 中的一条摘要转为 load_history 统一格式。"""
     zt_all = entry.get("zt_all", 0)
     broken = entry.get("limit_broken_count", 0)
     total = zt_all + broken
     bust_rate = round(broken / total * 100, 2) if total > 0 else 0.0
-    return {
+    result = {
         "date": entry["date"],
         "limit_up_count": zt_all,
         "limit_broken_count": broken,
@@ -98,6 +108,9 @@ def _history_entry_from_10d(entry: dict) -> dict:
         "max_continuous_name": "—",
         "top_topic": "—",
     }
+    for field in _EXTRA_10D_FIELDS:
+        result[field] = entry.get(field, 0)
+    return result
 
 
 def load_history(data_dir: str = "data", limit: int = 10) -> list[dict]:

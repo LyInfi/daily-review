@@ -152,3 +152,64 @@ class TestLoadHistory:
     def test_empty_dir_returns_empty_list(self, tmp_path):
         result = load_history(data_dir=str(tmp_path))
         assert result == []
+
+
+def test_history_entry_from_10d_full_fields():
+    """_history_entry_from_10d 应透传全部新字段，缺字段默认填0。"""
+    from processor import _history_entry_from_10d
+    entry = {
+        "date": "2026-02-10",
+        "zt_all": 60,
+        "limit_broken_count": 14,
+        "seal_rate": 81.0,
+        "up_count": 2500,
+        "down_count": 1000,
+        "dt_count": 7,
+        "lb_count": 21,
+        "up10_count": 55,
+        "down9_count": 10,
+        "yizi_count": 5,
+        "zt_925": 3,
+        "rate_1to2": 28.0,
+        "rate_2to3": 15.0,
+        "rate_3to4": 10.0,
+        "lb_rate": 35.0,
+        "lb_rate_prev": 30.0,
+        "zt_amount": 1111.0,
+        "total_amount": 8000.0,
+        "sh_amount": 5000.0,
+        "cyb_amount": 2000.0,
+        "kcb_amount": 800.0,
+        "shouban": 49,
+        "er_lb": 11,
+        "san_lb": 4,
+        "si_lb": 3,
+        "wu_lb": 1,
+        "t_before10": 20,
+        "t_1000_1130": 19,
+        "t_1300_1400": 15,
+        "t_1400_1500": 3,
+    }
+    result = _history_entry_from_10d(entry)
+    assert result["up_count"] == 2500
+    assert result["rate_1to2"] == 28.0
+    assert result["shouban"] == 49
+    assert result["t_1000_1130"] == 19
+    assert result["zt_amount"] == 1111.0
+    assert result["lb_rate"] == 35.0
+
+
+def test_history_entry_from_10d_missing_fields_default_zero():
+    """缺少新字段时应默认填0，不报错（旧缓存兼容性）。"""
+    from processor import _history_entry_from_10d
+    entry = {
+        "date": "2026-01-01",
+        "zt_all": 50,
+        "limit_broken_count": 10,
+        "seal_rate": 75.0,
+        # 没有任何新字段
+    }
+    result = _history_entry_from_10d(entry)
+    assert result["up_count"] == 0
+    assert result["shouban"] == 0
+    assert result["lb_rate"] == 0
