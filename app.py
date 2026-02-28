@@ -25,11 +25,11 @@ DAILY_METRICS = {
     "rate_3to4":          ("三进四连板率%",   "right", "dot"),
     "lb_rate":            ("连板率%",         "right", "dot"),
     "lb_rate_prev":       ("昨日连板率%",     "right", "dot"),
-    "zt_amount":          ("涨停总金额(亿)",  "right", "dash"),
-    "total_amount":       ("总金额(亿)",      "right", "dash"),
-    "sh_amount":          ("上证成交额(亿)",  "right", "dash"),
-    "cyb_amount":         ("创业板成交额(亿)","right", "dash"),
-    "kcb_amount":         ("科创板成交额(亿)","right", "dash"),
+    "zt_amount":          ("涨停总金额(亿)",  "left",  "dash"),
+    "total_amount":       ("总金额(亿)",      "left",  "dash"),
+    "sh_amount":          ("上证成交额(亿)",  "left",  "dash"),
+    "cyb_amount":         ("创业板成交额(亿)","left",  "dash"),
+    "kcb_amount":         ("科创板成交额(亿)","left",  "dash"),
 }
 
 DAILY_DEFAULT = ["zt_all", "limit_broken_count", "seal_rate", "lb_rate"]
@@ -175,7 +175,7 @@ else:
             ))
         fig_daily.update_layout(
             yaxis={"title": "家数 / 金额(亿)"},
-            yaxis2={"title": "比率% / 金额(亿)", "overlaying": "y", "side": "right"},
+            yaxis2={"title": "比率%", "overlaying": "y", "side": "right"},
             hovermode="x unified",
             legend={"orientation": "h", "y": -0.2},
         )
