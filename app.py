@@ -11,8 +11,6 @@ from processor import get_summary_stats, get_topic_counts, get_continuous_ladder
 DAILY_METRICS = {
     "zt_all":             ("总涨停",          "left",  "solid"),
     "limit_broken_count": ("开板数",          "left",  "solid"),
-    "up_count":           ("上涨家数",        "left",  "solid"),
-    "down_count":         ("下跌家数",        "left",  "solid"),
     "dt_count":           ("跌停数",          "left",  "solid"),
     "lb_count":           ("连板数",          "left",  "solid"),
     "up10_count":         ("涨幅10%以上",     "left",  "solid"),
@@ -33,6 +31,12 @@ DAILY_METRICS = {
 }
 
 DAILY_DEFAULT = ["zt_all", "limit_broken_count", "seal_rate", "lb_rate"]
+
+# 市场涨跌家数（量级为千，单独一张图）
+BREADTH_METRICS = {
+    "up_count":   "上涨家数",
+    "down_count": "下跌家数",
+}
 
 # 时间分布指标（key → 中文标签）
 TIMING_METRICS = {
@@ -217,6 +221,30 @@ else:
             legend={"orientation": "h", "y": -0.2},
         )
         st.plotly_chart(fig_timing, use_container_width=True)
+
+st.divider()
+
+# ── 模块 C3：近10日市场涨跌家数 ────────────────────────────────
+st.subheader("📈 近10日市场涨跌家数")
+
+if len(history) < 2:
+    st.info("历史数据不足，积累更多交易日后趋势图将自动显示。")
+else:
+    fig_breadth = go.Figure()
+    for key, label in BREADTH_METRICS.items():
+        fig_breadth.add_trace(go.Scatter(
+            x=hist_df["date"],
+            y=hist_df[key] if key in hist_df.columns else [0] * len(hist_df),
+            name=label,
+            mode="lines+markers",
+        ))
+    fig_breadth.update_layout(
+        xaxis={"type": "category"},
+        yaxis={"title": "家数"},
+        hovermode="x unified",
+        legend={"orientation": "h", "y": -0.2},
+    )
+    st.plotly_chart(fig_breadth, use_container_width=True)
 
 # ── 模块 D：连板梯队图（柱状图） ──────────────────────────────
 st.subheader("🪜 连板梯队")
