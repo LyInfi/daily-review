@@ -34,25 +34,60 @@ def _map_stock(raw: dict) -> dict:
 
 def _parse_ten_days(ten_days: list) -> list[dict]:
     """
-    从 tenDays 数组解析近10日趋势摘要。
-    tenDays[0]=日期, [3]=总涨停, [19]=开板数, [20]=封板率%
+    从 tenDays 数组解析近10日趋势摘要（全量30个指标）。
+    len=20 的字段取前 n 个值（n = len(dates)）。
     """
     if not ten_days or len(ten_days) < 21:
         return []
+
     dates = ten_days[0]
-    zt_all_list = ten_days[3]
-    broken_list = ten_days[19]
-    seal_list = ten_days[20]
-    n = min(len(dates), len(zt_all_list), len(broken_list), len(seal_list))
+    n = len(dates)
+
+    def _get(idx: int, i: int) -> float:
+        arr = ten_days[idx] if idx < len(ten_days) else []
+        if not arr or i >= len(arr):
+            return 0.0
+        try:
+            return float(arr[i] or 0)
+        except (ValueError, TypeError):
+            return 0.0
+
     result = []
     for i in range(n):
         parts = str(dates[i]).split("-")
         normalized = f"{parts[0]}-{int(parts[1]):02d}-{int(parts[2]):02d}"
         result.append({
             "date": normalized,
-            "zt_all": int(zt_all_list[i] or 0),
-            "limit_broken_count": int(broken_list[i] or 0),
-            "seal_rate": float(seal_list[i] or 0),
+            "up_count": _get(1, i),
+            "down_count": _get(2, i),
+            "zt_all": _get(3, i),
+            "dt_count": _get(4, i),
+            "lb_count": _get(5, i),
+            "up10_count": _get(6, i),
+            "down9_count": _get(7, i),
+            "yizi_count": _get(8, i),
+            "shouban": _get(9, i),
+            "er_lb": _get(10, i),
+            "san_lb": _get(11, i),
+            "si_lb": _get(12, i),
+            "wu_lb": _get(13, i),
+            "zt_925": _get(14, i),
+            "t_before10": _get(15, i),
+            "t_1000_1130": _get(16, i),
+            "t_1300_1400": _get(17, i),
+            "t_1400_1500": _get(18, i),
+            "limit_broken_count": _get(19, i),
+            "seal_rate": _get(20, i),
+            "rate_1to2": _get(21, i),
+            "rate_2to3": _get(22, i),
+            "rate_3to4": _get(23, i),
+            "lb_rate": _get(24, i),
+            "lb_rate_prev": _get(25, i),
+            "zt_amount": _get(26, i),
+            "total_amount": _get(27, i),
+            "sh_amount": _get(28, i),
+            "cyb_amount": _get(29, i),
+            "kcb_amount": _get(30, i),
         })
     return result
 

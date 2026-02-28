@@ -155,3 +155,48 @@ class TestLoadOrFetch:
         )
         result, warning = load_or_fetch(data_dir=str(tmp_path), fetch_fn=mock_fetch)
         mock_fetch.assert_called_once()
+
+
+def test_parse_ten_days_full_fields():
+    """_parse_ten_days 应解析全部30个指标字段。"""
+    from fetcher import _parse_ten_days
+    ten_days = [None] * 31
+    ten_days[0] = ["2026-1-1", "2026-1-2"]
+    for idx in [1,2,3,4,5,6,7,8,14,19,20,21,22,23,24,25,26,27,28,29,30]:
+        ten_days[idx] = [float(idx)] * 2
+    for idx in [9,10,11,12,13,15,16,17,18]:
+        ten_days[idx] = [float(idx)] * 20
+
+    result = _parse_ten_days(ten_days)
+    assert len(result) == 2
+    entry = result[0]
+    assert entry["up_count"] == 1.0
+    assert entry["down_count"] == 2.0
+    assert entry["zt_all"] == 3.0
+    assert entry["dt_count"] == 4.0
+    assert entry["lb_count"] == 5.0
+    assert entry["up10_count"] == 6.0
+    assert entry["down9_count"] == 7.0
+    assert entry["yizi_count"] == 8.0
+    assert entry["shouban"] == 9.0
+    assert entry["er_lb"] == 10.0
+    assert entry["san_lb"] == 11.0
+    assert entry["si_lb"] == 12.0
+    assert entry["wu_lb"] == 13.0
+    assert entry["zt_925"] == 14.0
+    assert entry["t_before10"] == 15.0
+    assert entry["t_1000_1130"] == 16.0
+    assert entry["t_1300_1400"] == 17.0
+    assert entry["t_1400_1500"] == 18.0
+    assert entry["limit_broken_count"] == 19.0
+    assert entry["seal_rate"] == 20.0
+    assert entry["rate_1to2"] == 21.0
+    assert entry["rate_2to3"] == 22.0
+    assert entry["rate_3to4"] == 23.0
+    assert entry["lb_rate"] == 24.0
+    assert entry["lb_rate_prev"] == 25.0
+    assert entry["zt_amount"] == 26.0
+    assert entry["total_amount"] == 27.0
+    assert entry["sh_amount"] == 28.0
+    assert entry["cyb_amount"] == 29.0
+    assert entry["kcb_amount"] == 30.0
