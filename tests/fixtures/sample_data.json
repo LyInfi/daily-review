@@ -1,0 +1,108 @@
+{
+  "lbg": {
+    "datas": [
+      {
+        "amount": 16.84,
+        "code": "001896",
+        "date": "2026-02-28",
+        "lb_count": "7",
+        "name": "测试股A",
+        "open": 0,
+        "precent": 9.98,
+        "price": 13.34,
+        "tor": 8.39,
+        "type": "算力;AI",
+        "zt_time": "09:31",
+        "fb_detail": "封板"
+      },
+      {
+        "amount": 5.18,
+        "code": "000003",
+        "date": "2026-02-28",
+        "lb_count": "3",
+        "name": "测试股B",
+        "open": 0,
+        "precent": 10.02,
+        "price": 14.61,
+        "tor": 3.67,
+        "type": "人工智能",
+        "zt_time": "09:30",
+        "fb_detail": "封板"
+      }
+    ],
+    "tj": {},
+    "detail": ""
+  },
+  "qt": {
+    "datas": [
+      {
+        "amount": 3.10,
+        "code": "000099",
+        "date": "2026-02-28",
+        "lb_count": "1",
+        "name": "测试股C",
+        "open": 0,
+        "precent": 10.0,
+        "price": 8.80,
+        "tor": 12.0,
+        "type": "人工智能",
+        "zt_time": "10:15",
+        "fb_detail": "封板"
+      }
+    ],
+    "tj": {},
+    "detail": ""
+  },
+  "gg": {
+    "datas": [],
+    "tj": {},
+    "detail": ""
+  },
+  "ztkb": {
+    "datas": [
+      {
+        "amount": 2.50,
+        "code": "000010",
+        "date": "2026-02-28",
+        "lb_count": "0",
+        "name": "测试股D",
+        "open": 1,
+        "precent": 5.0,
+        "price": 6.0,
+        "tor": 8.0,
+        "type": "新能源",
+        "zt_time": "09:32",
+        "fb_detail": "第1板 破板"
+      },
+      {
+        "amount": 1.80,
+        "code": "000020",
+        "date": "2026-02-28",
+        "lb_count": "0",
+        "name": "测试股E",
+        "open": 2,
+        "precent": 3.5,
+        "price": 5.0,
+        "tor": 6.5,
+        "type": "医药",
+        "zt_time": "09:40",
+        "fb_detail": "第2板 破板"
+      }
+    ],
+    "tj": {},
+    "detail": ""
+  },
+  "today": {
+    "ztAll": 48,
+    "fbl": 75.0,
+    "ztXg": 0,
+    "zt10Cyb": 12,
+    "zt10Kcb": 8,
+    "ztKcb": 2,
+    "ztCyb": 2
+  },
+  "tenDays": [
+    ["2026-02-20", "2026-02-21", "2026-02-24", "2026-02-25", "2026-02-26", "2026-02-27", "2026-02-28"]
+  ],
+  "time": "15:00"
+}
