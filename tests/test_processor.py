@@ -1,0 +1,113 @@
+import pytest
+from processor import (
+    get_summary_stats,
+    get_topic_counts,
+    get_continuous_ladder,
+    load_history,
+)
+
+SAMPLE_DATA = {
+    "date": "2026-02-28",
+    "summary": {
+        "zt_all": 48,
+        "seal_rate": 75.0,
+    },
+    "limit_up": [
+        {"name": "股A", "code": "000001", "continuous_days": 3, "reason": "人工智能", "amount": 5.2, "price": 10.0, "change_pct": 10.0, "turnover_rate": 12.0},
+        {"name": "股B", "code": "000002", "continuous_days": 3, "reason": "人工智能", "amount": 3.1, "price": 8.0, "change_pct": 10.0, "turnover_rate": 8.0},
+        {"name": "股C", "code": "000003", "continuous_days": 1, "reason": "新能源", "amount": 2.0, "price": 5.0, "change_pct": 10.0, "turnover_rate": 5.0},
+        {"name": "股D", "code": "000004", "continuous_days": 6, "reason": "低空经济", "amount": 8.0, "price": 20.0, "change_pct": 10.0, "turnover_rate": 15.0},
+    ],
+    "limit_broken": [
+        {"name": "股E", "code": "000005", "continuous_days": 0, "reason": "医药", "amount": 1.5, "price": 6.0, "change_pct": 5.0, "turnover_rate": 7.0},
+        {"name": "股F", "code": "000006", "continuous_days": 0, "reason": "新能源", "amount": 1.0, "price": 4.0, "change_pct": 3.0, "turnover_rate": 4.0},
+    ],
+}
+
+
+class TestGetSummaryStats:
+    def test_counts_limit_up(self):
+        stats = get_summary_stats(SAMPLE_DATA)
+        assert stats["limit_up_count"] == 4
+
+    def test_counts_limit_broken(self):
+        stats = get_summary_stats(SAMPLE_DATA)
+        assert stats["limit_broken_count"] == 2
+
+    def test_uses_api_zt_all_when_available(self):
+        stats = get_summary_stats(SAMPLE_DATA)
+        # ztAll from API = 48, overrides local count
+        assert stats["zt_all"] == 48
+
+    def test_uses_api_seal_rate(self):
+        stats = get_summary_stats(SAMPLE_DATA)
+        assert stats["seal_rate"] == 75.0
+
+    def test_calculates_bust_rate_from_local(self):
+        data_no_summary = {**SAMPLE_DATA, "summary": {}}
+        stats = get_summary_stats(data_no_summary)
+        # 炸板率 = 开板 / (涨停 + 开板) = 2/6 ≈ 33.33%
+        assert abs(stats["bust_rate"] - 33.33) < 0.1
+
+    def test_finds_max_continuous(self):
+        stats = get_summary_stats(SAMPLE_DATA)
+        assert stats["max_continuous"] == 6
+        assert stats["max_continuous_name"] == "股D"
+
+    def test_finds_strongest_topic(self):
+        stats = get_summary_stats(SAMPLE_DATA)
+        assert stats["top_topic"] == "人工智能"
+
+    def test_empty_data_returns_zeros(self):
+        empty = {"date": "2026-02-28", "limit_up": [], "limit_broken": [], "summary": {}}
+        stats = get_summary_stats(empty)
+        assert stats["limit_up_count"] == 0
+        assert stats["limit_broken_count"] == 0
+        assert stats["max_continuous"] == 0
+
+
+class TestGetTopicCounts:
+    def test_returns_sorted_topics(self):
+        topics = get_topic_counts(SAMPLE_DATA["limit_up"])
+        assert topics[0]["topic"] == "人工智能"
+        assert topics[0]["count"] == 2
+
+    def test_includes_all_topics(self):
+        topics = get_topic_counts(SAMPLE_DATA["limit_up"])
+        topic_names = [t["topic"] for t in topics]
+        assert "新能源" in topic_names
+        assert "低空经济" in topic_names
+
+    def test_splits_semicolon_reasons(self):
+        stocks = [
+            {"reason": "算力;AI", "name": "X", "code": "0"},
+        ]
+        topics = get_topic_counts(stocks)
+        topic_names = [t["topic"] for t in topics]
+        assert "算力" in topic_names
+        assert "AI" in topic_names
+
+    def test_empty_returns_empty_list(self):
+        assert get_topic_counts([]) == []
+
+
+class TestGetContinuousLadder:
+    def test_groups_by_continuous_days(self):
+        ladder = get_continuous_ladder(SAMPLE_DATA["limit_up"])
+        days_map = {item["days"]: item for item in ladder}
+        assert days_map[3]["count"] == 2
+        assert days_map[1]["count"] == 1
+        assert days_map[6]["count"] == 1
+
+    def test_includes_top_stock_name(self):
+        ladder = get_continuous_ladder(SAMPLE_DATA["limit_up"])
+        six_board = next(item for item in ladder if item["days"] == 6)
+        assert six_board["top_stock"] == "股D"
+
+    def test_sorted_by_days_ascending(self):
+        ladder = get_continuous_ladder(SAMPLE_DATA["limit_up"])
+        days = [item["days"] for item in ladder]
+        assert days == sorted(days)
+
+    def test_empty_returns_empty_list(self):
+        assert get_continuous_ladder([]) == []
