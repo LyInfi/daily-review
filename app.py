@@ -23,11 +23,6 @@ DAILY_METRICS = {
     "rate_3to4":          ("三进四连板率%",   "right", "dot"),
     "lb_rate":            ("连板率%",         "right", "dot"),
     "lb_rate_prev":       ("昨日连板率%",     "right", "dot"),
-    "zt_amount":          ("涨停总金额(亿)",  "left",  "dash"),
-    "total_amount":       ("总金额(亿)",      "left",  "dash"),
-    "sh_amount":          ("上证成交额(亿)",  "left",  "dash"),
-    "cyb_amount":         ("创业板成交额(亿)","left",  "dash"),
-    "kcb_amount":         ("科创板成交额(亿)","left",  "dash"),
 }
 
 DAILY_DEFAULT = ["zt_all", "limit_broken_count", "seal_rate", "lb_rate"]
@@ -37,6 +32,17 @@ BREADTH_METRICS = {
     "up_count":   "上涨家数",
     "down_count": "下跌家数",
 }
+
+# 成交额指标（单位亿，量级远大于家数类，单独一张图）
+VOLUME_METRICS = {
+    "zt_amount":    "涨停总金额(亿)",
+    "total_amount": "总金额(亿)",
+    "sh_amount":    "上证成交额(亿)",
+    "cyb_amount":   "创业板成交额(亿)",
+    "kcb_amount":   "科创板成交额(亿)",
+}
+
+VOLUME_DEFAULT = ["sh_amount", "cyb_amount", "total_amount"]
 
 # 时间分布指标（key → 中文标签）
 TIMING_METRICS = {
@@ -245,6 +251,41 @@ else:
         legend={"orientation": "h", "y": -0.2},
     )
     st.plotly_chart(fig_breadth, use_container_width=True)
+
+st.divider()
+
+# ── 模块 C4：近10日成交额 ───────────────────────────────────────
+st.subheader("💰 近10日成交额")
+
+if len(history) < 2:
+    st.info("历史数据不足，积累更多交易日后趋势图将自动显示。")
+else:
+    selected_volume = st.multiselect(
+        "选择成交额指标",
+        options=list(VOLUME_METRICS.keys()),
+        default=VOLUME_DEFAULT,
+        format_func=lambda k: VOLUME_METRICS[k],
+        key="trend_volume",
+    )
+
+    if not selected_volume:
+        st.info("请至少选择一个成交额指标。")
+    else:
+        fig_volume = go.Figure()
+        for key in selected_volume:
+            fig_volume.add_trace(go.Scatter(
+                x=hist_df["date"],
+                y=hist_df[key] if key in hist_df.columns else [0] * len(hist_df),
+                name=VOLUME_METRICS[key],
+                mode="lines+markers",
+            ))
+        fig_volume.update_layout(
+            xaxis={"type": "category"},
+            yaxis={"title": "成交额(亿)"},
+            hovermode="x unified",
+            legend={"orientation": "h", "y": -0.2},
+        )
+        st.plotly_chart(fig_volume, use_container_width=True)
 
 # ── 模块 D：连板梯队图（柱状图） ──────────────────────────────
 st.subheader("🪜 连板梯队")
