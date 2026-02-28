@@ -4,7 +4,7 @@ import plotly.graph_objects as go
 import pandas as pd
 from datetime import datetime
 from fetcher import load_or_fetch
-from processor import get_summary_stats, get_topic_counts, get_continuous_ladder, load_history
+from processor import get_summary_stats, get_topic_counts, get_continuous_ladder, get_lb_stocks, load_history
 
 # ── 近10日趋势图：指标定义 ─────────────────────────────────────
 # 日级别指标（key → (中文标签, 轴, 线型)）
@@ -98,7 +98,7 @@ st.divider()
 # ── 模块 A：最高连板股（表格） ─────────────────────────────────
 st.subheader("🏆 连板股排行")
 
-limit_up_df = pd.DataFrame(data["limit_up"]).sort_values("continuous_days", ascending=False)
+limit_up_df = pd.DataFrame(get_lb_stocks(data["limit_up"])).sort_values("continuous_days", ascending=False)
 limit_up_df = limit_up_df.rename(columns={
     "name": "股票名",
     "code": "代码",

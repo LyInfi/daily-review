@@ -5,6 +5,7 @@ from processor import (
     get_summary_stats,
     get_topic_counts,
     get_continuous_ladder,
+    get_lb_stocks,
     load_history,
 )
 
@@ -98,8 +99,10 @@ class TestGetContinuousLadder:
         ladder = get_continuous_ladder(SAMPLE_DATA["limit_up"])
         days_map = {item["days"]: item for item in ladder}
         assert days_map[3]["count"] == 2
-        assert days_map[1]["count"] == 1
         assert days_map[6]["count"] == 1
+        # 1板不算连板，不应出现在梯队中
+        assert 1 not in days_map
+        assert 0 not in days_map
 
     def test_includes_top_stock_name(self):
         ladder = get_continuous_ladder(SAMPLE_DATA["limit_up"])
@@ -113,6 +116,22 @@ class TestGetContinuousLadder:
 
     def test_empty_returns_empty_list(self):
         assert get_continuous_ladder([]) == []
+
+
+class TestGetLbStocks:
+    def test_filters_out_zero_and_one_board(self):
+        result = get_lb_stocks(SAMPLE_DATA["limit_up"])
+        days = [s["continuous_days"] for s in result]
+        assert 0 not in days
+        assert 1 not in days
+
+    def test_keeps_two_board_and_above(self):
+        result = get_lb_stocks(SAMPLE_DATA["limit_up"])
+        assert all(s["continuous_days"] >= 2 for s in result)
+        assert len(result) == 3  # 股A(3), 股B(3), 股D(6)
+
+    def test_empty_returns_empty(self):
+        assert get_lb_stocks([]) == []
 
 
 class TestLoadHistory:

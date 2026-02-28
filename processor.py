@@ -58,14 +58,21 @@ def get_topic_counts(stocks: list[dict]) -> list[dict]:
     ]
 
 
+def get_lb_stocks(stocks: list[dict]) -> list[dict]:
+    """返回连板数 >= 2 的股票列表（过滤首板和0板）。"""
+    return [s for s in stocks if s.get("continuous_days", 0) >= 2]
+
+
 def get_continuous_ladder(stocks: list[dict]) -> list[dict]:
     """
-    按连板数分组统计，返回连板梯队数据。
+    按连板数分组统计，返回连板梯队数据（仅含 >= 2 板）。
     每组包含连板数、股票数量、成交额最大的代表股名。
     """
     groups: dict[int, list[dict]] = {}
     for stock in stocks:
         days = stock["continuous_days"]
+        if days < 2:
+            continue
         groups.setdefault(days, []).append(stock)
 
     result = []
