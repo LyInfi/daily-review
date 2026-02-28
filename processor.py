@@ -125,7 +125,16 @@ def load_history(data_dir: str = "data", limit: int = 10) -> list[dict]:
         try:
             data = json.loads(f.read_text(encoding="utf-8"))
             stats = get_summary_stats(data)
-            history.append({"date": data.get("date", f.stem), **stats})
+            file_date = data.get("date", f.stem)
+            entry = {"date": file_date, **stats}
+            # 从 history_10d 中补充 tenDays 衍生指标（仅取与本文件日期匹配的条目）
+            for h in data.get("history_10d", []):
+                if h.get("date") == file_date:
+                    converted = _history_entry_from_10d(h)
+                    for field in _EXTRA_10D_FIELDS:
+                        entry[field] = converted.get(field, 0)
+                    break
+            history.append(entry)
         except (json.JSONDecodeError, KeyError):
             continue
 
