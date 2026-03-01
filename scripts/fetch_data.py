@@ -55,6 +55,10 @@ def main() -> None:
     try:
         data = fetch_today_data(date_str=date_str)
     except ConnectionError as e:
+        err = str(e)
+        if "404" in err:
+            print(f"No data for {date_str} (non-trading day, API 404), skipping.")
+            sys.exit(0)
         print(f"ERROR: Fetch failed: {e}", file=sys.stderr)
         sys.exit(1)
 
