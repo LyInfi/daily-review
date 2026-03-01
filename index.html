@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>每日复盘看板</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
+</head>
+<body>
+
+<header>
+  <h1>📈 每日复盘看板</h1>
+  <div class="date-selector">
+    <label for="date-select">日期：</label>
+    <select id="date-select"></select>
+    <span id="loading" style="display:none; color:#8b95a8; font-size:0.85rem;">加载中…</span>
+  </div>
+</header>
+
+<main>
+  <div id="warning-banner" style="display:none"></div>
+  <p id="data-caption" style="color:#8b95a8; font-size:0.8rem; margin-bottom:1rem;"></p>
+
+  <section>
+    <h2>📊 今日概览</h2>
+    <div class="cards-grid">
+      <div class="card" id="card-zt">
+        <div class="card-label"></div>
+        <div class="card-value">—</div>
+        <div class="card-sub"></div>
+      </div>
+      <div class="card" id="card-broken">
+        <div class="card-label"></div>
+        <div class="card-value">—</div>
+        <div class="card-sub"></div>
+      </div>
+      <div class="card" id="card-seal">
+        <div class="card-label"></div>
+        <div class="card-value">—</div>
+        <div class="card-sub"></div>
+      </div>
+      <div class="card" id="card-max">
+        <div class="card-label"></div>
+        <div class="card-value">—</div>
+        <div class="card-sub"></div>
+      </div>
+      <div class="card" id="card-topic">
+        <div class="card-label"></div>
+        <div class="card-value" style="font-size:1.1rem;">—</div>
+        <div class="card-sub"></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="two-col">
+      <div class="chart-box">
+        <h2>🏆 连板股排行</h2>
+        <div id="chart-lb"></div>
+      </div>
+      <div class="chart-box">
+        <h2>🔥 题材热度</h2>
+        <div id="chart-topic"></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="chart-full">
+      <h2>🪜 连板梯队</h2>
+      <div id="chart-ladder"></div>
+    </div>
+  </section>
+
+  <div id="section-history">
+
+    <section>
+      <div class="chart-full">
+        <h2>📊 近10日情绪趋势</h2>
+        <div class="multiselect-bar" id="ms-daily"></div>
+        <div id="chart-daily"></div>
+      </div>
+    </section>
+
+    <section>
+      <div class="chart-full">
+        <h2>⏰ 近10日涨停时间分布</h2>
+        <div class="multiselect-bar" id="ms-timing"></div>
+        <div id="chart-timing"></div>
+      </div>
+    </section>
+
+    <section>
+      <div class="chart-full">
+        <h2>📈 近10日市场涨跌家数</h2>
+        <div id="chart-breadth"></div>
+      </div>
+    </section>
+
+    <section>
+      <div class="chart-full">
+        <h2>💰 近10日成交额</h2>
+        <div class="multiselect-bar" id="ms-volume"></div>
+        <div id="chart-volume"></div>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<footer>
+  数据来源：<a href="https://www.wuylh.com/replayrobot/index.html" target="_blank" style="color:#4c8bf5">舞阳复盘</a>
+  &nbsp;·&nbsp; 每个工作日 16:00 自动更新
+</footer>
+
+<script src="js/utils.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/app.js"></script>
+
+</body>
+</html>
