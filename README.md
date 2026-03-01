@@ -2,6 +2,12 @@
 
 每日自动获取舞阳复盘网站数据，可视化展示涨停板核心指标。
 
+## 在线访问
+
+GitHub Pages: https://lyinfi.github.io/daily-review/
+
+（每个工作日 16:00 自动更新数据）
+
 ## 首次安装
 
 ```bash
